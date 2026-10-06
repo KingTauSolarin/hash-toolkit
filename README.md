@@ -2,7 +2,7 @@
 
 A small, fast, single-file web app for hashing, message authentication and encoding. No install, no server, no dependencies. Open the HTML file and it works.
 
-Built by KingTauSolarin.
+Built by King Sabatsu Kisuke as part of a growing cybersecurity toolkit.
 
 ## Features
 
@@ -82,3 +82,7 @@ Everything runs locally in your browser. Files and text are never uploaded, stor
 ## Contributing and feedback
 
 Found a bug or have an idea? Open an issue or send a note. This project is a learning build, so feedback that makes it better is welcome.
+
+## License
+
+MIT License. © 2026 King Sabatsu Kisuke.

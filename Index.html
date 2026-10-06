@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A client-side toolkit for hashing text and files, HMAC, and common encodings. Everything runs in your browser.">
+<title>Hash & Encoding Toolkit</title>
+<style>
+:root{--bg:#0b0f14;--card:#121923;--line:#223042;--text:#e6edf3;--mute:#8b9bb0;--acc:#2ee6a6;--bad:#ff5c6c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f7fa;--card:#fff;--line:#d5dde6;--text:#14202e;--mute:#5a6b7e;--acc:#0a9f6e;--bad:#d6293b}}
+:root[data-theme="light"]{--bg:#f4f7fa;--card:#fff;--line:#d5dde6;--text:#14202e;--mute:#5a6b7e;--acc:#0a9f6e;--bad:#d6293b}
+:root[data-theme="dark"]{--bg:#0b0f14;--card:#121923;--line:#223042;--text:#e6edf3;--mute:#8b9bb0;--acc:#2ee6a6;--bad:#ff5c6c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.3rem;margin:0 0 2px}h1 span{color:var(--acc)}
+.by{font-size:.8rem;color:var(--mute);margin:0 0 12px}
+button:hover{opacity:.9}
+.copyr{margin-top:8px}
+p.sub{margin:0 0 16px;color:var(--mute);font-size:.9rem}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--mute);border-radius:10px;font-size:.85rem;cursor:pointer}
+.tabs button.on{color:var(--bg);background:var(--acc);border-color:var(--acc);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+label{display:block;font-size:.8rem;color:var(--mute);margin:12px 0 6px}
+label:first-child{margin-top:0}
+textarea,input,select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:.95rem}
+textarea{min-height:90px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace}
+.row{display:flex;gap:8px;margin-top:10px}
+.row button,.copy{padding:10px 14px;border-radius:8px;border:1px solid var(--acc);background:transparent;color:var(--acc);font-size:.9rem;cursor:pointer;flex:1}
+.row button.p{background:var(--acc);color:var(--bg);font-weight:600}
+.h{margin-top:10px}
+.h .top{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;color:var(--mute)}
+.copy{flex:none;padding:3px 10px;font-size:.75rem}
+.h code{display:block;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:4px}
+.h code.ok{border-color:var(--acc);color:var(--acc)}
+#vmsg,#fmsg,#hvmsg{font-size:.85rem;margin-top:8px;min-height:1.2em}
+.err{color:var(--bad)}.good{color:var(--acc)}
+.drop{display:block;text-align:center;padding:26px 10px;border:2px dashed var(--line);border-radius:10px;color:var(--mute);cursor:pointer;font-size:.95rem}
+.drop.on{border-color:var(--acc);color:var(--acc)}
+#fmeta{margin-top:8px;font-size:.85rem;color:var(--mute);word-break:break-all}
+footer{margin-top:18px;font-size:.75rem;color:var(--mute);text-align:center}
+</style>
+</head>
+<body>
+<main>
+<header><h1>Hash <span>&amp;</span> Encoding Toolkit</h1><div class="by">by King Sabatsu Kisuke</div></header>
+<p class="sub">Everything runs in your browser. Nothing is sent anywhere.</p>
+
+<div class="tabs">
+<button data-p="p1" class="on">Hash</button>
+<button data-p="p3">HMAC</button>
+<button data-p="p4">File</button>
+<button data-p="p2">Encode</button>
+</div>
+
+<section id="p1" class="card">
+<label for="hin">Text to hash</label>
+<textarea id="hin" placeholder="Type or paste text..."></textarea>
+<div id="hout"></div>
+<label for="vin">Verify: paste a hash to compare</label>
+<input id="vin" placeholder="Paste expected hash" autocomplete="off" spellcheck="false">
+<div id="vmsg"></div>
+</section>
+
+<section id="p2" class="card" hidden>
+<label for="fmt">Format</label>
+<select id="fmt">
+<option value="b64">Base64</option>
+<option value="url">URL</option>
+<option value="hex">Hex</option>
+<option value="b64u">Base64 URL-safe</option>
+<option value="b32">Base32</option>
+<option value="bin">Binary</option>
+<option value="oct">Octal</option>
+<option value="html">HTML entities</option>
+<option value="uni">Unicode escapes (\uXXXX)</option>
+<option value="morse">Morse code</option>
+<option value="caesar">Caesar cipher (custom shift)</option>
+<option value="rot">ROT13</option>
+</select>
+<div id="shiftbox" hidden>
+<label for="shift">Shift (-25 to 25)</label>
+<input id="shift" type="number" value="3" min="-25" max="25">
+<div class="row"><button id="bf">Try all 25 shifts (decode)</button></div>
+</div>
+<label for="ein">Input</label>
+<textarea id="ein" placeholder="Type or paste..."></textarea>
+<div class="row"><button class="p" id="enc">Encode</button><button id="dec">Decode</button><button id="swap">Swap</button></div>
+<label for="eout">Output</label>
+<textarea id="eout" readonly></textarea>
+<div class="row"><button id="ecopy">Copy output</button></div>
+<div id="emsg" class="err"></div>
+</section>
+
+<section id="p3" class="card" hidden>
+<label for="hmsg">Message</label>
+<textarea id="hmsg" placeholder="Message to authenticate..."></textarea>
+<label for="hkey">Secret key</label>
+<input id="hkey" placeholder="Secret key" autocomplete="off" spellcheck="false">
+<label for="hal">Algorithm</label>
+<select id="hal"><option>SHA-256</option><option>SHA-1</option><option>SHA-384</option><option>SHA-512</option></select>
+<div class="h"><div class="top"><span>HMAC (hex)</span><button class="copy" id="hcopy">Copy</button></div><code id="hres">Enter a secret key</code></div>
+<label for="hvin">Verify: paste an expected HMAC</label>
+<input id="hvin" placeholder="Paste expected HMAC" autocomplete="off" spellcheck="false">
+<div id="hvmsg"></div>
+</section>
+
+<section id="p4" class="card" hidden>
+<label class="drop" id="drop" for="file">Tap to choose a file, or drop one here</label>
+<input type="file" id="file" hidden>
+<div id="fmeta"></div>
+<div id="fout"></div>
+<label for="fvin">Verify: paste a hash to compare</label>
+<input id="fvin" placeholder="Paste expected hash" autocomplete="off" spellcheck="false">
+<div id="fmsg"></div>
+</section>
+
+<footer>Hashes: MD5, SHA-1, SHA-256, SHA-384, SHA-512. MD5 and SHA-1 are broken for security use.
+<div class="copyr">© 2026 King Sabatsu Kisuke · MIT License</div></footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const ALGOS=["MD5","SHA-1","SHA-256","SHA-384","SHA-512"];
+function md5(bytes){
+  const K=[],S=[7,12,17,22,5,9,14,20,4,11,16,23,6,10,15,21];
+  for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296)>>>0;
+  const n=bytes.length,len=((n+8>>6)+1)<<6,buf=new Uint8Array(len);
+  buf.set(bytes);buf[n]=0x80;
+  const dv=new DataView(buf.buffer);
+  dv.setUint32(len-8,(n*8)>>>0,true);dv.setUint32(len-4,Math.floor(n/536870912),true);
+  let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;
+  for(let o=0;o<len;o+=64){
+    let A=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){
+      let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i}
+      else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}
+      else if(i<48){F=B^C^D;g=(3*i+5)%16}
+      else{F=C^(B|~D);g=(7*i)%16}
+      F=(F+A+K[i]+dv.getUint32(o+g*4,true))>>>0;
+      A=D;D=C;C=B;
+      const r=S[(i>>4)*4+(i%4)];
+      B=(B+((F<<r)|(F>>>(32-r))))>>>0;
+    }
+    a0=(a0+A)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;
+  }
+  return [a0,b0,c0,d0].map(x=>[0,8,16,24].map(r=>((x>>>r)&255).toString(16).padStart(2,"0")).join("")).join("");
+}
+const enc=new TextEncoder(),dec=new TextDecoder("utf-8",{fatal:true});
+let hashes={};
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  ["p1","p2","p3","p4"].forEach(id=>$(id).hidden=id!==b.dataset.p);
+});
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+const hcard=(a,h)=>`<div class="h"><div class="top"><span>${a}</span><button class="copy" data-v="${h}">Copy</button></div><code data-c="${a}">${h}</code></div>`;
+
+async function run(){
+  const data=enc.encode($("hin").value);
+  hashes={};
+  for(const a of ALGOS){
+    if(a==="MD5"){hashes[a]=md5(data);continue}
+    const buf=await crypto.subtle.digest(a,data);
+    hashes[a]=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+  $("hout").innerHTML=ALGOS.map(a=>`<div class="h"><div class="top"><span>${a}</span><button class="copy" data-v="${hashes[a]}">Copy</button></div><code data-c="${a}">${hashes[a]}</code></div>`).join("");
+  verify();
+}
+function chk(inp,m,hs,scope){
+  const v=inp.value.trim().toLowerCase().replace(/\s/g,"");
+  scope.querySelectorAll("[data-c]").forEach(e=>e.classList.remove("ok"));
+  if(!v){m.textContent="";return}
+  const hit=ALGOS.find(a=>hs[a]===v);
+  if(hit){m.className="good";m.textContent="Match: "+hit;scope.querySelector(`[data-c="${hit}"]`).classList.add("ok")}
+  else{m.className="err";m.textContent="No match."}
+}
+const verify=()=>chk($("vin"),$("vmsg"),hashes,$("hout"));
+async function copy(t,btn){
+  try{await navigator.clipboard.writeText(t);const o=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=o,1000)}catch(e){}
+}
+$("hin").oninput=run;$("vin").oninput=verify;
+document.addEventListener("click",e=>{const v=e.target.dataset&&e.target.dataset.v;if(v)copy(v,e.target)});
+
+const toB64=s=>btoa(String.fromCharCode(...enc.encode(s)));
+const fromB64=s=>dec.decode(Uint8Array.from(atob(s.trim()),c=>c.charCodeAt(0)));
+const toHex=s=>[...enc.encode(s)].map(b=>b.toString(16).padStart(2,"0")).join("");
+const fromHex=s=>{const h=s.replace(/\s|0x/g,"");if(!/^([0-9a-f]{2})+$/i.test(h))throw 0;return dec.decode(Uint8Array.from(h.match(/../g),x=>parseInt(x,16)))};
+const rot=s=>s.replace(/[a-z]/gi,c=>{const b=c<="Z"?65:97;return String.fromCharCode((c.charCodeAt(0)-b+13)%26+b)});
+const bytesOf=s=>[...enc.encode(s)],fromBytes=a=>dec.decode(Uint8Array.from(a));
+const toB64u=s=>toB64(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const fromB64u=s=>{s=s.trim().replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return fromB64(s)};
+const A32="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+const toB32=s=>{let v=0,n=0,o="";for(const b of bytesOf(s)){v=(v<<8)|b;n+=8;while(n>=5){o+=A32[(v>>>(n-5))&31];n-=5;v&=(1<<n)-1}}
+  if(n)o+=A32[(v<<(5-n))&31];while(o.length%8)o+="=";return o};
+const fromB32=s=>{s=s.toUpperCase().replace(/=+$/,"").replace(/\s/g,"");let v=0,n=0;const o=[];
+  for(const c of s){const i=A32.indexOf(c);if(i<0)throw 0;v=(v<<5)|i;n+=5;if(n>=8){o.push((v>>>(n-8))&255);n-=8;v&=(1<<n)-1}}return fromBytes(o)};
+const toBin=s=>bytesOf(s).map(b=>b.toString(2).padStart(8,"0")).join(" ");
+const fromBin=s=>{const p=s.trim().split(/\s+/);if(!p.every(x=>/^[01]{1,8}$/.test(x)))throw 0;return fromBytes(p.map(x=>parseInt(x,2)))};
+const toOct=s=>bytesOf(s).map(b=>b.toString(8).padStart(3,"0")).join(" ");
+const fromOct=s=>{const p=s.trim().split(/\s+/);if(!p.every(x=>/^[0-7]{1,3}$/.test(x)))throw 0;return fromBytes(p.map(x=>parseInt(x,8)))};
+const toHtml=s=>[...s].map(c=>{const n=c.codePointAt(0);return(n>126||"&<>\"'".includes(c))?"&#"+n+";":c}).join("");
+const fromHtml=s=>new DOMParser().parseFromString(s,"text/html").documentElement.textContent;
+const toUni=s=>s.split("").map(c=>"\\u"+c.charCodeAt(0).toString(16).padStart(4,"0")).join("");
+const fromUni=s=>s.replace(/\\u([0-9a-f]{4})/gi,(m,h)=>String.fromCharCode(parseInt(h,16)));
+const MC={A:".-",B:"-...",C:"-.-.",D:"-..",E:".",F:"..-.",G:"--.",H:"....",I:"..",J:".---",K:"-.-",L:".-..",M:"--",N:"-.",O:"---",P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",U:"..-",V:"...-",W:".--",X:"-..-",Y:"-.--",Z:"--..",0:"-----",1:".----",2:"..---",3:"...--",4:"....-",5:".....",6:"-....",7:"--...",8:"---..",9:"----."};
+const MR=Object.fromEntries(Object.entries(MC).map(([k,v])=>[v,k]));
+const toMorse=s=>s.toUpperCase().split(/\s+/).map(w=>[...w].map(c=>{if(!MC[c])throw 0;return MC[c]}).join(" ")).join(" / ");
+const fromMorse=s=>s.trim().split(/\s*\/\s*/).map(w=>w.trim().split(/\s+/).map(c=>{if(!MR[c])throw 0;return MR[c]}).join("")).join(" ");
+const caesar=(s,d)=>{const k=(((parseInt($("shift").value)||0)*d)%26+26)%26;return s.replace(/[a-z]/gi,c=>{const b=c<="Z"?65:97;return String.fromCharCode((c.charCodeAt(0)-b+k)%26+b)})};
+const F={caesar:[s=>caesar(s,1),s=>caesar(s,-1)],b64u:[toB64u,fromB64u],b32:[toB32,fromB32],bin:[toBin,fromBin],oct:[toOct,fromOct],html:[toHtml,fromHtml],uni:[toUni,fromUni],morse:[toMorse,fromMorse],b64:[toB64,fromB64],url:[encodeURIComponent,decodeURIComponent],hex:[toHex,fromHex],rot:[rot,rot]};
+
+function go(i){
+  $("emsg").textContent="";
+  try{$("eout").value=F[$("fmt").value][i]($("ein").value)}
+  catch(e){$("eout").value="";$("emsg").textContent="Invalid input for this format."}
+}
+$("enc").onclick=()=>go(0);$("dec").onclick=()=>go(1);
+$("swap").onclick=()=>{$("ein").value=$("eout").value;$("eout").value="";$("emsg").textContent=""};
+$("ecopy").onclick=e=>copy($("eout").value,e.target);
+$("fmt").onchange=()=>{$("shiftbox").hidden=$("fmt").value!=="caesar"};
+$("bf").onclick=()=>{const s=$("ein").value,old=$("shift").value;$("emsg").textContent="";let o="";
+  for(let i=1;i<26;i++){$("shift").value=i;o+="Shift "+i+": "+caesar(s,-1)+"\n"}
+  $("shift").value=old;$("eout").value=o};
+
+let hmacVal="";
+async function hm(){
+  const kt=$("hkey").value,r=$("hres");
+  hmacVal="";$("hvmsg").textContent="";r.classList.remove("ok");
+  if(!kt){r.textContent="Enter a secret key";return}
+  const k=await crypto.subtle.importKey("raw",enc.encode(kt),{name:"HMAC",hash:$("hal").value},false,["sign"]);
+  hmacVal=hex(await crypto.subtle.sign("HMAC",k,enc.encode($("hmsg").value)));
+  r.textContent=hmacVal;hv();
+}
+function hv(){
+  const v=$("hvin").value.trim().toLowerCase(),m=$("hvmsg"),r=$("hres");
+  r.classList.remove("ok");
+  if(!v||!hmacVal){m.textContent="";return}
+  if(v===hmacVal){m.className="good";m.textContent="Match: signature is valid";r.classList.add("ok")}
+  else{m.className="err";m.textContent="No match."}
+}
+["hmsg","hkey"].forEach(i=>$(i).oninput=hm);$("hal").onchange=hm;$("hvin").oninput=hv;
+$("hcopy").onclick=e=>hmacVal&&copy(hmacVal,e.target);
+
+const sz=n=>n<1024?n+" B":n<1048576?(n/1024).toFixed(1)+" KB":(n/1048576).toFixed(1)+" MB";
+let fh={};
+async function doFile(f){
+  if(!f)return;
+  if(f.size>200*1048576){$("fmeta").textContent="File too large for in-browser hashing (limit 200 MB).";$("fout").innerHTML="";return}
+  $("fmeta").textContent=f.name+" · "+sz(f.size)+" · hashing...";
+  const buf=await f.arrayBuffer();fh={};
+  for(const a of ALGOS)fh[a]=a==="MD5"?md5(new Uint8Array(buf)):hex(await crypto.subtle.digest(a,buf));
+  $("fmeta").textContent=f.name+" · "+sz(f.size);
+  $("fout").innerHTML=ALGOS.map(a=>hcard(a,fh[a])).join("");
+  chk($("fvin"),$("fmsg"),fh,$("fout"));
+}
+$("file").onchange=e=>doFile(e.target.files[0]);
+const dz=$("drop");
+dz.ondragover=e=>{e.preventDefault();dz.classList.add("on")};
+dz.ondragleave=()=>dz.classList.remove("on");
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove("on");doFile(e.dataTransfer.files[0])};
+$("fvin").oninput=()=>chk($("fvin"),$("fmsg"),fh,$("fout"));
+run();
+</script>
+</body>
+</html>
